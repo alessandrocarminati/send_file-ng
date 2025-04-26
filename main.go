@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/tarm/serial"
 	"io"
+	"regexp"
 	"log"
 	"os"
 	"time"
@@ -77,12 +78,21 @@ func sendLine(port io.ReadWriter, cmd string) string {
 	return readOut(port)
 }
 
+func checkCommand(port io.ReadWriter, cmd, regex string) bool {
+	fmt.Printf("verifying %s\n", cmd)
+	r, _ := regexp.Compile(regex)
+	port.Write([]byte(cmd + " --version \n"))
+	time.Sleep(500 * time.Millisecond)
+	s := readOut(port)
+	fmt.Printf("%s --version \n%s\n", cmd, s)
+	return r.MatchString(s)
 
-
-
+}
 
 func main() {
 	var buf bytes.Buffer
+	neededCmds1 := []string {"stty", "stdbuf", "cat", "rm", "base64", "gzip"}
+	neededCmdsRegex1 := []string {"stty[^0-9]+[0-9\\.]+", "stdbuf[^0-9]+[0-9\\.]+", "cat[^0-9]+[0-9\\.]+", "rm[^0-9]+[0-9\\.]+", "base64[^0-9]+[0-9\\.]+", "gzip[^0-9]+[0-9\\.]+"}
 
 	cl := parseCMDline()
 
@@ -106,6 +116,13 @@ func main() {
 
 	port, err := setupSer(cl.Device, cl.BaudRate)
 	defer port.Close()
+
+	for i, cmd := range neededCmds1 {
+		if ! checkCommand(port, cmd, neededCmdsRegex1[i]) {
+			fmt.Printf("Prerequisite %s is not met\n", cmd)
+			os.Exit(1)
+		}
+	}
 
 	_ = sendLine(port, "stty -icanon -echo")
 	_ = sendLine(port, fmt.Sprintf("stdbuf -o0 cat > %s", cl.RemoteTmpFN))
