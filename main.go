@@ -84,7 +84,7 @@ func checkCommand(port io.ReadWriter, cmd, regex string) bool {
 	port.Write([]byte(cmd + " --version \n"))
 	time.Sleep(500 * time.Millisecond)
 	s := readOut(port)
-	fmt.Printf("%s --version \n%s\n", cmd, s)
+//	fmt.Printf("%s --version \n%s\n", cmd, s)
 	return r.MatchString(s)
 
 }
