@@ -13,10 +13,48 @@ import (
 	"time"
 	"github.com/cheggaaa/pb/v3"
 )
+var Build string
+var Version string
+var Hash string
+var Dirty string
+var AppName string
+
+func chunkedSend(w io.Writer, data string, chunkSize int, delay time.Duration) {
+	var bar *pb.ProgressBar
+	bar = pb.StartNew(len(data)/chunkSize)
+	for i := 0; i < len(data); i += chunkSize {
+		bar.Increment()
+		end := i + chunkSize
+		if end > len(data) {
+			end = len(data)
+		}
+		w.Write([]byte(data[i:end]))
+		time.Sleep(delay)
+	}
+	bar.Finish()
+}
+
+func readSome(r io.Reader) {
+
+	buf := make([]byte, 512)
+	for {
+		if port, ok := r.(interface{ SetReadDeadline(time.Time) error }); ok {
+			port.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+		}
+
+		n, err := r.Read(buf)
+		if err != nil {
+			break
+		}
+		if n > 0 {
+			fmt.Printf("<- %s", string(buf[:n]))
+		}
+	}
+}
 
 func main() {
 	if len(os.Args) != 3 {
-		fmt.Println("Usage: send_console-ng <input-file> <serial-device>")
+		fmt.Printf("Usage: %s <input-file> <serial-device>\n", AppName)
 		os.Exit(1)
 	}
 
@@ -67,35 +105,3 @@ func main() {
 	fmt.Println("✅ Transfer complete.")
 }
 
-func chunkedSend(w io.Writer, data string, chunkSize int, delay time.Duration) {
-	var bar *pb.ProgressBar
-	bar = pb.StartNew(len(data)/chunkSize)
-	for i := 0; i < len(data); i += chunkSize {
-		bar.Increment()
-		end := i + chunkSize
-		if end > len(data) {
-			end = len(data)
-		}
-		w.Write([]byte(data[i:end]))
-		time.Sleep(delay)
-	}
-	bar.Finish()
-}
-
-func readSome(r io.Reader) {
-
-	buf := make([]byte, 512)
-	for {
-		if port, ok := r.(interface{ SetReadDeadline(time.Time) error }); ok {
-			port.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
-		}
-
-		n, err := r.Read(buf)
-		if err != nil {
-			break
-		}
-		if n > 0 {
-			fmt.Printf("<- %s", string(buf[:n]))
-		}
-	}
-}
