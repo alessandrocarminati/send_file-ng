@@ -34,10 +34,10 @@ func chunkedSend(w io.Writer, data string, chunkSize int, delay time.Duration) {
 	bar.Finish()
 }
 
-func readSome(r io.Reader) {
+func readOut(r io.Reader) string {
 
 	buf := make([]byte, 512)
-	for {
+	for i:=0; i<10; i++ {
 		if port, ok := r.(interface{ SetReadDeadline(time.Time) error }); ok {
 			port.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
 		}
@@ -47,9 +47,10 @@ func readSome(r io.Reader) {
 			break
 		}
 		if n > 0 {
-			fmt.Printf("<- %s", string(buf[:n]))
+			return string(buf[:n])
 		}
 	}
+	return ""
 }
 
 func versionString() string {
@@ -69,8 +70,19 @@ func setupSer(device string, speed int) (*serial.Port, error) {
 	return port, nil
 }
 
-func main() {
+func sendLine(port io.ReadWriter, cmd string) string {
+	fmt.Printf("Sending: %s\n", cmd)
+	port.Write([]byte(cmd + "\n"))
+	time.Sleep(500 * time.Millisecond)
+	return readOut(port)
+}
 
+
+
+
+
+func main() {
+	var buf bytes.Buffer
 
 	cl := parseCMDline()
 
@@ -95,22 +107,14 @@ func main() {
 	port, err := setupSer(cl.Device, cl.BaudRate)
 	defer port.Close()
 
-	sendLine := func(cmd string) {
-		fmt.Printf("-> %s\n", cmd)
-		port.Write([]byte(cmd + "\n"))
-		time.Sleep(500 * time.Millisecond)
-		readSome(port)
-	}
-
-	sendLine("stty -icanon -echo")
-	sendLine(fmt.Sprintf("stdbuf -o0 cat > %s", cl.RemoteTmpFN))
+	_ = sendLine(port, "stty -icanon -echo")
+	_ = sendLine(port, fmt.Sprintf("stdbuf -o0 cat > %s", cl.RemoteTmpFN))
 
 	data, err := os.ReadFile(cl.Filename)
 	if err != nil {
 		log.Fatalf("Failed to read input file: %v", err)
 	}
 
-	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
 	gz.Write(data)
 	gz.Close()
@@ -125,8 +129,8 @@ func main() {
 	remoteFilename := filepath.Base(cl.Filename)
 	remoteDir := filepath.Dir(cl.RemoteTmpFN)
 
-	sendLine("stty sane")
-	sendLine(fmt.Sprintf("cat %[1]s | base64 -d | gzip -d >%[2]s/%[3]s && rm -rf  %[1]s", cl.RemoteTmpFN, remoteDir, remoteFilename))
+	_ = sendLine(port, "stty sane")
+	_ = sendLine(port, fmt.Sprintf("cat %[1]s | base64 -d | gzip -d >%[2]s/%[3]s && rm -rf  %[1]s", cl.RemoteTmpFN, remoteDir, remoteFilename))
 	fmt.Println("Transfer complete.")
 }
 
