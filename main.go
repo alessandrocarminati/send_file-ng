@@ -92,7 +92,7 @@ func checkCommand(port io.ReadWriter, cmd, regex string) bool {
 func main() {
 	var buf bytes.Buffer
 	neededCmds1 := []string {"stty", "stdbuf", "cat", "rm", "base64", "gzip"}
-	neededCmdsRegex1 := []string {"stty[^0-9]+[0-9\\.]+", "stdbuf[^0-9]+[0-9\\.]+", "cat[^0-9]+[0-9\\.]+", "rm[^0-9]+[0-9\\.]+", "base64[^0-9]+[0-9\\.]+", "gzip[^0-9]+[0-9\\.]+"}
+	neededCmdsRegex1 := []string {"stty[^0-9]+[0-9]+\\.[0-9]+", "stdbuf[^0-9]+[0-9]+\\.[0-9]+", "cat[^0-9]+[0-9]+\\.[0-9]+", "rm[^0-9]+[0-9]+\\.[0-9]+", "base64[^0-9]+[0-9]+\\.[0-9]+", "gzip[0-9]+\\.[^0-[0-9\\.]+"}
 
 	cl := parseCMDline()
 
