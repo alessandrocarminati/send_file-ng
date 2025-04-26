@@ -52,27 +52,49 @@ func readSome(r io.Reader) {
 	}
 }
 
-func main() {
-	if len(os.Args) != 3 {
-		fmt.Printf("Usage: %s <input-file> <serial-device>\n", AppName)
-		os.Exit(1)
-	}
+func versionString() string {
+	return fmt.Sprintf("%s %s.%s(%s) - %s\n", AppName, Version, Build, Hash, Dirty)
+}
 
-	inputPath := os.Args[1]
-	serialPath := os.Args[2]
-
+func setupSer(device string, speed int) (*serial.Port, *bufio.Reader, error) {
 	c := &serial.Config{
-		Name:        serialPath,
-		Baud:        115200,
+		Name:        device,
+		Baud:        speed,
 		ReadTimeout: time.Millisecond * 500,
 	}
 	port, err := serial.OpenPort(c)
 	if err != nil {
-		log.Fatalf("Failed to open serial port: %v", err)
+		return nil, nil, err
 	}
-	defer port.Close()
-
 	reader := bufio.NewReader(port)
+	return port, reader, nil
+}
+
+func main() {
+
+
+	cl := parseCMDline()
+
+	if cl.Ver {
+		fmt.Println(versionString())
+		os.Exit(0)
+	}
+
+	if cl.Help {
+		fmt.Println(versionString())
+		fmt.Println(helpText())
+		os.Exit(0)
+	}
+
+	if cl.Device == "DEFAULT" || cl.Filename == "DEFAULT"  || cl.BaudRate == 0 {
+		fmt.Println("Error: Missing or wrong argument\n\n")
+		fmt.Println(versionString())
+		fmt.Println(helpText())
+		os.Exit(1)
+	}
+
+	port, reader, err := setupSer(cl.Device, cl.BaudRate)
+	defer port.Close()
 
 	sendLine := func(cmd string) {
 		fmt.Printf("-> %s\n", cmd)
@@ -84,7 +106,7 @@ func main() {
 	sendLine("stty -icanon -echo")
 	sendLine("stdbuf -o0 cat > output.txt")
 
-	data, err := os.ReadFile(inputPath)
+	data, err := os.ReadFile(cl.Filename)
 	if err != nil {
 		log.Fatalf("Failed to read input file: %v", err)
 	}
