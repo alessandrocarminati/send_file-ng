@@ -17,7 +17,7 @@ import (
 var Build string
 var Version string
 var Hash string
-var Dirty string
+var Rev string
 var AppName string
 
 func chunkedSend(w io.Writer, data string, chunkSize int, delay time.Duration) {
@@ -55,7 +55,7 @@ func readOut(r io.Reader) string {
 }
 
 func versionString() string {
-	return fmt.Sprintf("%s %s.%s(%s) - %s\n", AppName, Version, Build, Hash, Dirty)
+	return fmt.Sprintf("%s %s.%s(%s) - %s\n", AppName, Version, Build, Hash, Rev)
 }
 
 func setupSer(device string, speed int) (*serial.Port, error) {
