@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"path/filepath"
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
@@ -56,7 +56,7 @@ func versionString() string {
 	return fmt.Sprintf("%s %s.%s(%s) - %s\n", AppName, Version, Build, Hash, Dirty)
 }
 
-func setupSer(device string, speed int) (*serial.Port, *bufio.Reader, error) {
+func setupSer(device string, speed int) (*serial.Port, error) {
 	c := &serial.Config{
 		Name:        device,
 		Baud:        speed,
@@ -64,10 +64,9 @@ func setupSer(device string, speed int) (*serial.Port, *bufio.Reader, error) {
 	}
 	port, err := serial.OpenPort(c)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	reader := bufio.NewReader(port)
-	return port, reader, nil
+	return port, nil
 }
 
 func main() {
@@ -93,18 +92,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	port, reader, err := setupSer(cl.Device, cl.BaudRate)
+	port, err := setupSer(cl.Device, cl.BaudRate)
 	defer port.Close()
 
 	sendLine := func(cmd string) {
 		fmt.Printf("-> %s\n", cmd)
 		port.Write([]byte(cmd + "\n"))
 		time.Sleep(500 * time.Millisecond)
-		readSome(reader)
+		readSome(port)
 	}
 
 	sendLine("stty -icanon -echo")
-	sendLine("stdbuf -o0 cat > output.txt")
+	sendLine(fmt.Sprintf("stdbuf -o0 cat > %s", cl.RemoteTmpFN))
 
 	data, err := os.ReadFile(cl.Filename)
 	if err != nil {
@@ -123,7 +122,11 @@ func main() {
 	port.Write([]byte{3})
 	time.Sleep(300 * time.Millisecond)
 
+	remoteFilename := filepath.Base(cl.Filename)
+	remoteDir := filepath.Dir(cl.RemoteTmpFN)
+
 	sendLine("stty sane")
-	fmt.Println("✅ Transfer complete.")
+	sendLine(fmt.Sprintf("cat %[1]s | base64 -d | gzip -d >%[2]s/%[3]s && rm -rf  %[1]s", cl.RemoteTmpFN, remoteDir, remoteFilename))
+	fmt.Println("Transfer complete.")
 }
 
