@@ -1,2 +1,4 @@
 send_console-ng
 send_console-ng-*
+send_console-ng.spec
+*.src.rpm

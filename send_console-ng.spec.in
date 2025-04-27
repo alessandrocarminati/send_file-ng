@@ -1,0 +1,34 @@
+Name:           %%PRJ_NAME%%
+Version:        %%MAJOR%%.%%MINOR%%
+Release:        1%{?dist}
+Summary:        Small utility to send files using the same serial console you use to control the system
+
+License:        MIT
+URL:            https://github.com/alessandrocarminati/send_file-ng
+Source0:        %{name}-%{version}.tar.gz
+
+BuildRequires:  golang, make
+
+%description
+send_console-ng is a tool to transfer files over a serial console: useful when the only thing alive 
+on the other side is a shell prompt (if you're lucky) and there's no network in sight.
+
+%prep
+%setup -q
+
+%build
+make
+
+%install
+# Create target directories
+mkdir -p %{buildroot}/usr/bin
+
+# Manually copy the built binary
+cp %{name}-%{version} %{buildroot}/usr/bin/%{name}
+
+%files
+/usr/bin/%{name}
+
+%changelog
+* Sun Apr 27 2025 Alessandro Carminati <acarmina@redhat.com> - v0.0.10
+- Initial RPM release
