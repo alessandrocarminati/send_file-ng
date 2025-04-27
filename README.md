@@ -22,12 +22,10 @@ on the host side.
 Usage Example:
 ```
 send_console-ng -b 115200 -f busybox -d /dev/ttyUSB1
--b: Set the serial baudrate
-
--f: File to send
-
--d: Serial device
 ```
+* `-b`: Set the serial baudrate
+* `-f`: File to send
+* `-d`: Serial device
 
 It handles buffering, compression, encoding... 
 so you just send and hope.
