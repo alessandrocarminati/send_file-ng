@@ -137,7 +137,8 @@ func main() {
 	gz.Close()
 
 	encoded := base64.StdEncoding.EncodeToString(buf.Bytes())
-	chunkedSend(port, encoded, 128, 25*time.Millisecond)
+	Delay := time.Duration(2880000/cl.BaudRate)*time.Millisecond
+	chunkedSend(port, encoded, 128, Delay)
 
 	port.Write([]byte("\n"))
 	port.Write([]byte{3})
