@@ -7,7 +7,7 @@ useful when the only thing alive on the other side is a shell prompt
 It's a second, improved iteration of the original `send_console`, I 
 shamefully not published.
 Now bold enough to actually tweak terminal settings remotely rather
-than fighting them like Don Quixote with terminal mills [true story](https://carminatialessandro.blogspot.com).
+than fighting them like Don Quixote with terminal mills [true story](https://carminatialessandro.blogspot.com/2025/04/when-wi-fi-says-no-and-your-serial-says.html).
 
 ## Why
 
